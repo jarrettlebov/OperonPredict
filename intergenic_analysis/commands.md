@@ -1,5 +1,5 @@
 # Commands
-Below is a set of commands used to explore read mapping to intergenic regions of E. coli K12. 
+Below is a set of commands used to explore reads mapping to intergenic regions of E. coli K12. 
 
 <!-- MarkdownTOC autolink="true" -->
 
@@ -10,22 +10,34 @@ Below is a set of commands used to explore read mapping to intergenic regions of
 	- [Sort and index bam file](#sort-and-index-bam-file)
 	- [Isolate forward and reverse strand reads](#isolate-forward-and-reverse-strand-reads)
 	- [Index reads](#index-reads)
-		- [Create coordinates .bed file containing \(+\)strand non-rRNA coordinates from .gff file](#create-coordinates-bed-file-containing-strand-non-rrna-coordinates-from-gff-file)
-		- [Create coordinates .bed file containing \(-\)strand non-rRNA coordinates from .gff file](#create-coordinates-bed-file-containing--strand-non-rrna-coordinates-from-gff-file)
-		- [Create a .bam file containing only reads that map to mRNA gene regions](#create-a-bam-file-containing-only-reads-that-map-to-mrna-gene-regions)
-		- [Sort f and r non-RNA.bam files](#sort-f-and-r-non-rnabam-files)
-		- [index f and r non-RNA_sort.bam files](#index-f-and-r-non-rna_sortbam-files)
-- [Create coordinates .bed file containing reads that map to non-rRNA and non-tRNA intergenic regions](#create-coordinates-bed-file-containing-reads-that-map-to-non-rrna-and-non-trna-intergenic-regions)
-	- [Create a .bed file containing intergenic regions for \(+\)strand](#create-a-bed-file-containing-intergenic-regions-for-strand)
-	- [Create a .bed file containing intergenic regions for \(-\)strand](#create-a-bed-file-containing-intergenic-regions-for--strand)
-	- [Create coordinates .bed file containing rRNA coordinates from .gff file](#create-coordinates-bed-file-containing-rrna-coordinates-from-gff-file)
-	- [Remove intergenic regions which might contain rRNAs and tRNAs](#remove-intergenic-regions-which-might-contain-rrnas-and-trnas)
-	- [Run python script to remove coordinates that encode non-mRNAs from plus strand bed file](#run-python-script-to-remove-coordinates-that-encode-non-mrnas-from-plus-strand-bed-file)
-	- [Run python script to remove coordinates that encode non-mRNAs from minus strand bed file](#run-python-script-to-remove-coordinates-that-encode-non-mrnas-from-minus-strand-bed-file)
-		- [Create a .bam file containing only reads that map to non-t-rRNA intergenic regions](#create-a-bam-file-containing-only-reads-that-map-to-non-t-rrna-intergenic-regions)
-		- [Sort f and r non-RNA.bam files](#sort-f-and-r-non-rnabam-files-1)
-		- [Index f and r non-RNA_sort.bam files](#index-f-and-r-non-rna_sortbam-files-1)
-- [Convert sorted .bam files to .bed files](#convert-sorted-bam-files-to-bed-files)
+- [Create K12 non-t-rRNA ".bed" files with locus tag information](#create-k12-non-t-rrna-bed-files-with-locus-tag-information)
+- [Create .bed files from *_gene_reads.bam files](#create-bed-files-from-_gene_readsbam-files)
+- [Figure out which gene intervals over lap each read intervals and count the number of genes that over lap reads](#figure-out-which-gene-intervals-over-lap-each-read-intervals-and-count-the-number-of-genes-that-over-lap-reads)
+- [Caclulate the number of genes that are overlapped by a read which also overlaps another gene](#caclulate-the-number-of-genes-that-are-overlapped-by-a-read-which-also-overlaps-another-gene)
+	- [Number of genes each read over laps](#number-of-genes-each-read-over-laps)
+	- [Number of forward reads overlapping more than 1 gene](#number-of-forward-reads-overlapping-more-than-1-gene)
+	- [Forard strand](#forard-strand)
+	- [Forward strand: number of genes overlaped by a read](#forward-strand-number-of-genes-overlaped-by-a-read)
+	- [Reverse strand: number of genes overlaped by a read](#reverse-strand-number-of-genes-overlaped-by-a-read)
+	- [Number of reverse reads overlapping more than 1 gene](#number-of-reverse-reads-overlapping-more-than-1-gene)
+	- [Reverse strand](#reverse-strand)
+- [Create files that contain the number of bp a read overlaps and the percentage of a gene a read covers](#create-files-that-contain-the-number-of-bp-a-read-overlaps-and-the-percentage-of-a-gene-a-read-covers)
+	- [Produce a file with all forward bp overlap values in single column](#produce-a-file-with-all-forward-bp-overlap-values-in-single-column)
+	- [Produce a file with all reverse bp overlap values in single column](#produce-a-file-with-all-reverse-bp-overlap-values-in-single-column)
+	- [Produce a file with all forward and reverse bp overlap values in single column](#produce-a-file-with-all-forward-and-reverse-bp-overlap-values-in-single-column)
+	- [Produce a file with all forward bp overlap values for multigene reads in single column](#produce-a-file-with-all-forward-bp-overlap-values-for-multigene-reads-in-single-column)
+	- [Produce a file with all reverse bp overlap values for multigene reads in single column](#produce-a-file-with-all-reverse-bp-overlap-values-for-multigene-reads-in-single-column)
+	- [Produce a file with all forward and reverse bp overlap values for multigene reads in single column](#produce-a-file-with-all-forward-and-reverse-bp-overlap-values-for-multigene-reads-in-single-column)
+	- [Produce a file with all forward fraction overlap values in single column](#produce-a-file-with-all-forward-fraction-overlap-values-in-single-column)
+	- [Produce a file with all reverse fraction overlap values in single column](#produce-a-file-with-all-reverse-fraction-overlap-values-in-single-column)
+	- [Produce a file with all forward and reverse fraction overlap values in single column](#produce-a-file-with-all-forward-and-reverse-fraction-overlap-values-in-single-column)
+	- [Produce a file with all forward fraction overlap values for multigene reads in single column](#produce-a-file-with-all-forward-fraction-overlap-values-for-multigene-reads-in-single-column)
+	- [Produce a file with all reverse fraction overlap values for multigene reads in single column](#produce-a-file-with-all-reverse-fraction-overlap-values-for-multigene-reads-in-single-column)
+	- [Produce a file with all forward and reverse fraction overlap values for multigene reads in single column](#produce-a-file-with-all-forward-and-reverse-fraction-overlap-values-for-multigene-reads-in-single-column)
+- [Create a coverage plot files](#create-a-coverage-plot-files)
+	- [Index reads](#index-reads-1)
+	- [Create a depth file for all positions](#create-a-depth-file-for-all-positions)
+	- [Average the depth of every 10 kb, 100 kb, 1000 kb](#average-the-depth-of-every-10-kb-100-kb-1000-kb)
 
 <!-- /MarkdownTOC -->
 
@@ -78,102 +90,127 @@ samtools view -f 16 -o r_sorted_mapped_K12_directRNA.bam sorted_mapped_K12_direc
 samtools index f_sorted_mapped_K12_directRNA.bam
 samtools index r_sorted_mapped_K12_directRNA.bam
 ```
-
-### Create coordinates .bed file containing (+)strand non-rRNA coordinates from .gff file 
-```{bash, eval=F}
-Ref_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes
-cd $Ref_dir
-grep $'\t+' GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3=="gene") print $0}' | grep -v "biotype=rRNA" | grep -v "biotype=tRNA" | awk '{print $1,"\t",$4,"\t",$5}' > K12_plus_mRNA.bed
-```
-### Create coordinates .bed file containing (-)strand non-rRNA coordinates from .gff file 
-```{bash, eval = F}
-Ref_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes
-cd $Ref_dir
-grep $'\t-' GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3=="gene") print $0}' | grep -v "biotype=rRNA" | grep -v "biotype=tRNA" | awk '{print $1,"\t",$4,"\t",$5}' > K12_minus_mRNA.bed
-```
-### Create a .bam file containing only reads that map to mRNA gene regions
-```{bash, eval = F}
-Align_dir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Align_out2
-cd $Align_dir
-samtools view -bL $Ref_dir/K12_plus_mRNA.bed f_sorted_mapped_K12_directRNA.bam > f_mRNA.bam
-samtools view -bL $Ref_dir/K12_minus_mRNA.bed r_sorted_mapped_K12_directRNA.bam > r_mRNA.bam
-```
-### Sort f and r non-RNA.bam files
-```{bash, eval = F}
-cd $Align_dir
-samtools sort f_mRNA.bam > f_mRNA_sort.bam
-samtools sort r_mRNA.bam > r_mRNA_sort.bam
-```
-### index f and r non-RNA_sort.bam files
-```{bash, eval = F}
-cd $Align_dir
-samtools index f_mRNA_sort.bam 
-samtools index r_mRNA_sort.bam 
-```
-# Create coordinates .bed file containing reads that map to non-rRNA and non-tRNA intergenic regions
-## Create a .bed file containing intergenic regions for (+)strand
+# Create K12 non-t-rRNA ".bed" files with locus tag information
 ```{bash, eval = F}
 cd $Ref_dir
-awk '{print $1}' K12_plus_mRNA.bed >  f_K12_chrome.txt
-awk '{print $2}' K12_plus_mRNA.bed >  f_K12_starts.txt
-awk '{print $3}' K12_plus_mRNA.bed >  f_K12_ends.txt
-sed -i '1i NC_000913.3' f_K12_chrome.txt
-sed -i '1i 1' f_K12_ends.txt
-echo "4641652" >> f_K12_starts.txt
-paste f_K12_chrome.txt f_K12_ends.txt f_K12_starts.txt > f_K12_intergene.bed
+grep $'\t+' GCF_000005845.2_ASM584v2_genomic.gff | sed 's/;/\t/g' | grep -v "biotype=rRNA\|biotype=tRNA" | awk '{print $1"\t"$4"\t"$5"\t"$NF"\t"$7}' | grep "locus" | sort -k2 -n | uniq > $Align_dir/f_gene_feats.bed
+grep $'\t-' GCF_000005845.2_ASM584v2_genomic.gff | sed 's/;/\t/g' | grep -v "biotype=rRNA\|biotype=tRNA" | awk '{print $1"\t"$4"\t"$5"\t"$NF"\t"$7}' | grep "locus" | sort -k2 -n | uniq > $Align_dir/r_gene_feats.bed
+cd $Align_dir
+awk '{print $1,"\t"$2,"\t"$3,"\t"$4}' f_gene_feats.bed > f_gene_feats.min.bed
+awk '{print $1,"\t"$2,"\t"$3,"\t"$4}' r_gene_feats.bed > r_gene_feats.min.bed
 ```
-## Create a .bed file containing intergenic regions for (-)strand
-```{bash, eval = F}
-cd $Ref_dir
-awk '{print $1}' K12_minus_mRNA.bed >  r_K12_chrome.txt
-awk '{print $2}' K12_minus_mRNA.bed >  r_K12_starts.txt
-awk '{print $3}' K12_minus_mRNA.bed >  r_K12_ends.txt
-sed -i '1i NC_000913.3' r_K12_chrome.txt
-sed -i '1i 1' r_K12_ends.txt
-echo "4641652" >> r_K12_starts.txt
-paste r_K12_chrome.txt r_K12_ends.txt r_K12_starts.txt > r_K12_intergene.bed
-```
-## Create coordinates .bed file containing rRNA coordinates from .gff file 
-```{bash, eval = F}
-cd $Ref_dir
-grep "gbkey=rRNA" GCF_000005845.2_ASM584v2_genomic.gff | grep -v "exon" | awk '{print $1"\t"$4"\t"$5}' > K12_rRNA.bed
-```
-## Remove intergenic regions which might contain rRNAs and tRNAs
-```{bash, eval = F}
-cd $Ref_dir
-grep "biotype=tRNA" GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3 == "gene") print $1"\t"$4"\t"$5}' > K12_tRNA.bed 
-cat K12_rRNA.bed K12_tRNA.bed > K12_non-t-rRNA.bed
-```
-## Run python script to remove coordinates that encode non-mRNAs from plus strand bed file
-```{bash, eval = F}
-python $Scripts/bed_parser_plus.py | sed 's/#/\t/g' | sort -k2 -n > f_K12_mRNA-only_intergene.bed
-awk '{if ($2 > $3) print $1"\t"$3"\t"$2; else print $0}' f_K12_mRNA-only_intergene.bed > f_K12_mRNA-only_intergene_reordered.bed
-```
-## Run python script to remove coordinates that encode non-mRNAs from minus strand bed file
-```{bash, eval = F}
-python $Scripts/bed_parser_minus.py | sed 's/#/\t/g' | sort -k2 -n > r_K12_mRNA-only_intergene.bed
-awk '{if ($2 > $3) print $1"\t"$3"\t"$2; else print $0}' r_K12_mRNA-only_intergene.bed > r_K12_mRNA-only_intergene_reordered.bed
-```
-### Create a .bam file containing only reads that map to non-t-rRNA intergenic regions
+# Create .bed files from *_gene_reads.bam files
 ```{bash, eval = F}
 cd $Align_dir
-samtools view -bL $Ref_dir/f_K12_mRNA-only_intergene_reordered.bed f_sorted_mapped_K12_directRNA.bam > f_intergene.bam
-samtools view -bL $Ref_dir/r_K12_mRNA-only_intergene_reordered.bed r_sorted_mapped_K12_directRNA.bam > r_intergene.bam
+samtools view -bL f_gene_feats.bed f_sorted_mapped_K12_directRNA.bam > f_gene_reads.bam
+samtools view -bL r_gene_feats.bed r_sorted_mapped_K12_directRNA.bam > r_gene_reads.bam
+bedtools bamtobed -i f_gene_reads.bam | sort -k2 -n | uniq > f_gene_reads.bed
+bedtools bamtobed -i r_gene_reads.bam | sort -k2 -n | uniq > r_gene_reads.bed
+awk '{print $1,"\t"$2,"\t"$3,"\t"$4}' f_gene_reads.bed > f_gene_reads.min.bed
+awk '{print $1,"\t"$2,"\t"$3,"\t"$4}' r_gene_reads.bed > r_gene_reads.min.bed
 ```
-### Sort f and r non-RNA.bam files
+# Figure out which gene intervals over lap each read intervals and count the number of genes that over lap reads
 ```{bash, eval = F}
 cd $Align_dir
-samtools sort f_intergene.bam > f_intergene.bam_sort.bam
-samtools sort r_intergene.bam > r_intergene.bam_sort.bam
+rm *gene_reads_overlap.txt
+python $Scripts/bederlap_finder.py f_gene_feats.min.bed f_gene_reads.min.bed > f_gene_reads_overlap.txt
+python $Scripts/bederlap_finder.py r_gene_feats.min.bed r_gene_reads.min.bed > r_gene_reads_overlap.txt
 ```
-### Index f and r non-RNA_sort.bam files
+# Caclulate the number of genes that are overlapped by a read which also overlaps another gene
+## Number of genes each read over laps
+```{bash, eval = F}
+sed 's/^.*features = //g' f_gene_reads_overlap.txt > f_num_gene-read_overlaps.txt
+sed 's/^.*features = //g' r_gene_reads_overlap.txt > r_num_gene-read_overlaps.txt
+cat f_num_gene-read_overlaps.txt r_num_gene-read_overlaps.txt > all_num_gene-read_overlaps.txt
+```
+## Number of forward reads overlapping more than 1 gene
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" f_gene_reads_overlap.txt | wc
+```
+## Forard strand
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" f_gene_reads_overlap.txt | sed "s/^.*, \['//g" | sed 's/].*//g' | tr -d ",'" | sed 's/ /\n/g' | sort -n | uniq | wc
+```
+## Forward strand: number of genes overlaped by a read
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' f_gene_reads_overlap.txt | awk '{print $1}' | sort -n | uniq | wc
+```
+## Reverse strand: number of genes overlaped by a read
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' r_gene_reads_overlap.txt | awk '{print $1}' | sort -n | uniq | wc
+```
+## Number of reverse reads overlapping more than 1 gene
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" r_gene_reads_overlap.txt | wc
+```
+## Reverse strand
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" r_gene_reads_overlap.txt | sed "s/^.*, \['//g" | sed 's/].*//g' | tr -d ",'" | sed 's/ /\n/g' | sort -n | uniq | wc
+```
+# Create files that contain the number of bp a read overlaps and the percentage of a gene a read covers
+## Produce a file with all forward bp overlap values in single column
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' f_gene_reads_overlap.txt | sed 's/features =.*//g' | cut -d " " -f2- | sed 's/],.*//g' | tr -d "[," | sed 's/ /\n/g' > f_bp_gene-read_overlap.txt
+```
+## Produce a file with all reverse bp overlap values in single column
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' r_gene_reads_overlap.txt | sed 's/features =.*//g' | cut -d " " -f2- | sed 's/],.*//g' | tr -d "[," | sed 's/ /\n/g' > r_bp_gene-read_overlap.txt
+```
+## Produce a file with all forward and reverse bp overlap values in single column
+```{bash, eval = F}
+cat f_bp_gene-read_overlap.txt r_bp_gene-read_overlap.txt > all_bp_gene-read_overlap.txt
+```
+## Produce a file with all forward bp overlap values for multigene reads in single column
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" f_gene_reads_overlap.txt | sed 's/^.*locus_tag=//g' | sed 's/features =.*//g' | cut -d " " -f2- | sed 's/],.*//g' | tr -d "[," | sed 's/ /\n/g' > f_bp_gene-read_multi-overlap.txt
+```
+## Produce a file with all reverse bp overlap values for multigene reads in single column
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" r_gene_reads_overlap.txt | sed 's/^.*locus_tag=//g' | sed 's/features =.*//g' | cut -d " " -f2- | sed 's/],.*//g' | tr -d "[," | sed 's/ /\n/g' > r_bp_gene-read_multi-overlap.txt
+```
+## Produce a file with all forward and reverse bp overlap values for multigene reads in single column
+```{bash, eval = F}
+cat f_bp_gene-read_multi-overlap.txt r_bp_gene-read_multi-overlap.txt > all_bp_gene-read_multi-overlap.txt
+```
+## Produce a file with all forward fraction overlap values in single column
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' f_gene_reads_overlap.txt | sed 's/features =.*//g' | sed 's/^.*], //g' | tr -d "][," | sed 's/ /\n/g' | sed '/^$/d' > f_frac_gene-read_overlap.txt
+```
+## Produce a file with all reverse fraction overlap values in single column
+```{bash, eval = F}
+sed 's/^.*locus_tag=//g' r_gene_reads_overlap.txt | sed 's/features =.*//g' | sed 's/^.*], //g' | tr -d "][," | sed 's/ /\n/g' | sed '/^$/d' > r_frac_gene-read_overlap.txt
+```
+## Produce a file with all forward and reverse fraction overlap values in single column
+```{bash, eval = F}
+cat f_frac_gene-read_overlap.txt r_frac_gene-read_overlap.txt > all_frac_gene-read_overlap.txt
+```
+## Produce a file with all forward fraction overlap values for multigene reads in single column
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" f_gene_reads_overlap.txt | sed 's/^.*locus_tag=//g' | sed 's/features =.*//g' | sed 's/^.*], //g' | tr -d "][," | sed 's/ /\n/g' | sed '/^$/d' > f_frac_gene-read_multi-overlap.txt
+```
+## Produce a file with all reverse fraction overlap values for multigene reads in single column
+```{bash, eval = F}
+grep -v "features = 0\|features = 1" r_gene_reads_overlap.txt | sed 's/^.*locus_tag=//g' | sed 's/features =.*//g' | sed 's/^.*], //g' | tr -d "][," | sed 's/ /\n/g' | sed '/^$/d' > r_frac_gene-read_multi-overlap.txt
+```
+## Produce a file with all forward and reverse fraction overlap values for multigene reads in single column
+```{bash, eval = F}
+cat f_frac_gene-read_multi-overlap.txt r_frac_gene-read_multi-overlap.txt > all_frac_gene-read_multi-overlap.txt
+```
+# Create a coverage plot files
+## Index reads
 ```{bash, eval = F}
 cd $Align_dir
-samtools index f_intergene.bam_sort.bam 
-samtools index r_intergene.bam_sort.bam 
+samtools index f_gene_reads.bam
+samtools index r_gene_reads.bam
 ```
-# Convert sorted .bam files to .bed files
+## Create a depth file for all positions
 ```{bash, eval = F}
-bedtools bamtobed -i $Align_dir/f_intergene.bam_sort.bam > $Align_dir/f_intergene.bam_sort.bed
-bedtools bamtobed -i $Align_dir/r_intergene.bam_sort.bam > $Align_dir/r_intergene.bam_sort.bed
+cd $Ref_dir
+samtools depth -aa -r NC_000913.3:1-4641652 $Align_dir/f_gene_reads.bam $Align_dir/r_gene_reads.bam | awk '{print $0"\t"$3+$4}' > gene_feats_read_depth.txt
+```
+## Average the depth of every 10 kb, 100 kb, 1000 kb 
+```{bash, eval = F}
+awk '{sum+=$5}(NR%10000==0){mean=sum/10000;print mean; sum=0;next}' gene_feats_read_depth.txt > 10kb_gene_feats_read_depth.txt
+awk '{sum+=$5}(NR%100000==0){mean=sum/100000;print mean; sum=0;next}' gene_feats_read_depth.txt > 100kb_gene_feats_read_depth.txt
+awk '{sum+=$5}(NR%1000000==0){mean=sum/1000000;print mean; sum=0;next}' gene_feats_read_depth.txt > 1000kb_gene_feats_read_depth.txt
 ```
