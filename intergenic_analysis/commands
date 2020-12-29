@@ -1,0 +1,176 @@
+<!-- MarkdownTOC autolink="true" -->
+
+- [Directories](#directories)
+- [Perform basecalling with guppy_basecaller](#perform-basecalling-with-guppy_basecaller)
+- [Map reads to reference E. coli K12 genome](#map-reads-to-reference-e-coli-k12-genome)
+- [Prepare reads for visualization on IGV](#prepare-reads-for-visualization-on-igv)
+	- [Sort and index bam file](#sort-and-index-bam-file)
+	- [Isolate forward and reverse strand reads](#isolate-forward-and-reverse-strand-reads)
+	- [Index reads](#index-reads)
+		- [Create coordinates .bed file containing \(+\)strand non-rRNA coordinates from .gff file](#create-coordinates-bed-file-containing-strand-non-rrna-coordinates-from-gff-file)
+		- [Create coordinates .bed file containing \(-\)strand non-rRNA coordinates from .gff file](#create-coordinates-bed-file-containing--strand-non-rrna-coordinates-from-gff-file)
+		- [Create a .bam file containing only reads that map to mRNA gene regions](#create-a-bam-file-containing-only-reads-that-map-to-mrna-gene-regions)
+		- [Sort f and r non-RNA.bam files](#sort-f-and-r-non-rnabam-files)
+		- [index f and r non-RNA_sort.bam files](#index-f-and-r-non-rna_sortbam-files)
+- [Create coordinates .bed file containing reads that map to non-rRNA and non-tRNA intergenic regions](#create-coordinates-bed-file-containing-reads-that-map-to-non-rrna-and-non-trna-intergenic-regions)
+	- [Create a .bed file containing intergenic regions for \(+\)strand](#create-a-bed-file-containing-intergenic-regions-for-strand)
+	- [Create a .bed file containing intergenic regions for \(-\)strand](#create-a-bed-file-containing-intergenic-regions-for--strand)
+	- [Create coordinates .bed file containing rRNA coordinates from .gff file](#create-coordinates-bed-file-containing-rrna-coordinates-from-gff-file)
+	- [Remove intergenic regions which might contain rRNAs and tRNAs](#remove-intergenic-regions-which-might-contain-rrnas-and-trnas)
+	- [Run python script to remove coordinates that encode non-mRNAs from plus strand bed file](#run-python-script-to-remove-coordinates-that-encode-non-mrnas-from-plus-strand-bed-file)
+	- [Run python script to remove coordinates that encode non-mRNAs from minus strand bed file](#run-python-script-to-remove-coordinates-that-encode-non-mrnas-from-minus-strand-bed-file)
+		- [Create a .bam file containing only reads that map to non-t-rRNA intergenic regions](#create-a-bam-file-containing-only-reads-that-map-to-non-t-rrna-intergenic-regions)
+		- [Sort f and r non-RNA.bam files](#sort-f-and-r-non-rnabam-files-1)
+		- [Index f and r non-RNA_sort.bam files](#index-f-and-r-non-rna_sortbam-files-1)
+- [Convert sorted .bam files to .bed files](#convert-sorted-bam-files-to-bed-files)
+
+<!-- /MarkdownTOC -->
+
+# Directories
+```{bash, eval = F}
+Working_dir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq
+Align_dir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Align_out2
+Ref_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes
+Programs=/local/aberdeen2rw/julie/Jarrett/Programs
+Scripts=/local/aberdeen2rw/julie/Jarrett/Scripts
+DB_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes/blastdbs
+FeatureCounts=/local/aberdeen2rw/julie/Jarrett/Programs/Subread/subread-2.0.1-source/bin/featureCounts
+Miniconda3_bin_dir=/local/aberdeen2rw/julie/Jarrett/Programs/miniconda3/bin
+Tombo_bin_dir=/usr/local/packages/python-3.5.2/bin/
+Fast5_dir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fast5/
+fastqdir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fastq2/pass
+Test=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fastq2/Test
+F5=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fastq2/Test/Single_Fast5_test/0
+```
+# Perform basecalling with guppy_basecaller
+```{bash, eval = F}
+guppy_basecaller --compress_fastq -i /local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fast5/ -s /local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Jarrett/20200702_E_coli_K12_direct_totRNA/20200702_E_coli_K12_direct_totRNA/20200702_2003_MN21969_FAN42967_b833baa7/fastq2/ -c rna_r9.4.1_70bps_hac.cfg --fast5_out --qscore_filtering --min_qscore 7 --records_per_fastq 10000000 --num_callers 8 --cpu_threads_per_caller 4
+```
+# Map reads to reference E. coli K12 genome
+```{bash, eval = F}
+combine_fastq(){
+zcat "$fastqdir"/*.gz > "$Align_dir"/comb.fastq
+}
+combine_fastq
+
+align_fastq(){
+minimap2 -ax map-ont -t 4 "$Ref_dir/GCF_000005845.2_ASM584v2_genomic.fna" "$Align_dir"/comb.fastq | samtools view -bho "$Align_dir"/mapped_K12_directRNA.bam
+}
+align_fastq
+```
+# Prepare reads for visualization on IGV
+## Sort and index bam file 
+```{bash, eval = F}
+cd $outdir
+samtools sort mapped_K12_directRNA.bam -o sorted_mapped_K12_directRNA.bam
+samtools index sorted_mapped_K12_directRNA.bam
+```
+## Isolate forward and reverse strand reads
+```{bash, eval = F}
+samtools view -F 4 -F 16 -o f_sorted_mapped_K12_directRNA.bam sorted_mapped_K12_directRNA.bam
+samtools view -f 16 -o r_sorted_mapped_K12_directRNA.bam sorted_mapped_K12_directRNA.bam
+```
+## Index reads
+```{bash, eval = F}
+samtools index f_sorted_mapped_K12_directRNA.bam
+samtools index r_sorted_mapped_K12_directRNA.bam
+```
+
+### Create coordinates .bed file containing (+)strand non-rRNA coordinates from .gff file 
+```{bash, eval=F}
+Ref_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes
+cd $Ref_dir
+grep $'\t+' GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3=="gene") print $0}' | grep -v "biotype=rRNA" | grep -v "biotype=tRNA" | awk '{print $1,"\t",$4,"\t",$5}' > K12_plus_mRNA.bed
+```
+### Create coordinates .bed file containing (-)strand non-rRNA coordinates from .gff file 
+```{bash, eval = F}
+Ref_dir=/local/aberdeen2rw/julie/Jarrett/Ref_genomes
+cd $Ref_dir
+grep $'\t-' GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3=="gene") print $0}' | grep -v "biotype=rRNA" | grep -v "biotype=tRNA" | awk '{print $1,"\t",$4,"\t",$5}' > K12_minus_mRNA.bed
+```
+### Create a .bam file containing only reads that map to mRNA gene regions
+```{bash, eval = F}
+Align_dir=/local/aberdeen2rw/julie/Jarrett/DirectRNAseq/Align_out2
+cd $Align_dir
+samtools view -bL $Ref_dir/K12_plus_mRNA.bed f_sorted_mapped_K12_directRNA.bam > f_mRNA.bam
+samtools view -bL $Ref_dir/K12_minus_mRNA.bed r_sorted_mapped_K12_directRNA.bam > r_mRNA.bam
+```
+### Sort f and r non-RNA.bam files
+```{bash, eval = F}
+cd $Align_dir
+samtools sort f_mRNA.bam > f_mRNA_sort.bam
+samtools sort r_mRNA.bam > r_mRNA_sort.bam
+```
+### index f and r non-RNA_sort.bam files
+```{bash, eval = F}
+cd $Align_dir
+samtools index f_mRNA_sort.bam 
+samtools index r_mRNA_sort.bam 
+```
+# Create coordinates .bed file containing reads that map to non-rRNA and non-tRNA intergenic regions
+## Create a .bed file containing intergenic regions for (+)strand
+```{bash, eval = F}
+cd $Ref_dir
+awk '{print $1}' K12_plus_mRNA.bed >  f_K12_chrome.txt
+awk '{print $2}' K12_plus_mRNA.bed >  f_K12_starts.txt
+awk '{print $3}' K12_plus_mRNA.bed >  f_K12_ends.txt
+sed -i '1i NC_000913.3' f_K12_chrome.txt
+sed -i '1i 1' f_K12_ends.txt
+echo "4641652" >> f_K12_starts.txt
+paste f_K12_chrome.txt f_K12_ends.txt f_K12_starts.txt > f_K12_intergene.bed
+```
+## Create a .bed file containing intergenic regions for (-)strand
+```{bash, eval = F}
+cd $Ref_dir
+awk '{print $1}' K12_minus_mRNA.bed >  r_K12_chrome.txt
+awk '{print $2}' K12_minus_mRNA.bed >  r_K12_starts.txt
+awk '{print $3}' K12_minus_mRNA.bed >  r_K12_ends.txt
+sed -i '1i NC_000913.3' r_K12_chrome.txt
+sed -i '1i 1' r_K12_ends.txt
+echo "4641652" >> r_K12_starts.txt
+paste r_K12_chrome.txt r_K12_ends.txt r_K12_starts.txt > r_K12_intergene.bed
+```
+## Create coordinates .bed file containing rRNA coordinates from .gff file 
+```{bash, eval = F}
+cd $Ref_dir
+grep "gbkey=rRNA" GCF_000005845.2_ASM584v2_genomic.gff | grep -v "exon" | awk '{print $1"\t"$4"\t"$5}' > K12_rRNA.bed
+```
+## Remove intergenic regions which might contain rRNAs and tRNAs
+```{bash, eval = F}
+cd $Ref_dir
+grep "biotype=tRNA" GCF_000005845.2_ASM584v2_genomic.gff | awk '{if ($3 == "gene") print $1"\t"$4"\t"$5}' > K12_tRNA.bed 
+cat K12_rRNA.bed K12_tRNA.bed > K12_non-t-rRNA.bed
+```
+## Run python script to remove coordinates that encode non-mRNAs from plus strand bed file
+```{bash, eval = F}
+python $Scripts/bed_parser_plus.py | sed 's/#/\t/g' | sort -k2 -n > f_K12_mRNA-only_intergene.bed
+awk '{if ($2 > $3) print $1"\t"$3"\t"$2; else print $0}' f_K12_mRNA-only_intergene.bed > f_K12_mRNA-only_intergene_reordered.bed
+```
+## Run python script to remove coordinates that encode non-mRNAs from minus strand bed file
+```{bash, eval = F}
+python $Scripts/bed_parser_minus.py | sed 's/#/\t/g' | sort -k2 -n > r_K12_mRNA-only_intergene.bed
+awk '{if ($2 > $3) print $1"\t"$3"\t"$2; else print $0}' r_K12_mRNA-only_intergene.bed > r_K12_mRNA-only_intergene_reordered.bed
+```
+### Create a .bam file containing only reads that map to non-t-rRNA intergenic regions
+```{bash, eval = F}
+cd $Align_dir
+samtools view -bL $Ref_dir/f_K12_mRNA-only_intergene_reordered.bed f_sorted_mapped_K12_directRNA.bam > f_intergene.bam
+samtools view -bL $Ref_dir/r_K12_mRNA-only_intergene_reordered.bed r_sorted_mapped_K12_directRNA.bam > r_intergene.bam
+```
+### Sort f and r non-RNA.bam files
+```{bash, eval = F}
+cd $Align_dir
+samtools sort f_intergene.bam > f_intergene.bam_sort.bam
+samtools sort r_intergene.bam > r_intergene.bam_sort.bam
+```
+### Index f and r non-RNA_sort.bam files
+```{bash, eval = F}
+cd $Align_dir
+samtools index f_intergene.bam_sort.bam 
+samtools index r_intergene.bam_sort.bam 
+```
+# Convert sorted .bam files to .bed files
+```{bash, eval = F}
+bedtools bamtobed -i $Align_dir/f_intergene.bam_sort.bam > $Align_dir/f_intergene.bam_sort.bed
+bedtools bamtobed -i $Align_dir/r_intergene.bam_sort.bam > $Align_dir/r_intergene.bam_sort.bed
+```
