@@ -87,7 +87,7 @@ cut -f2 f_non0coverage.txt > f_non0pos.txt
 cut -f2 r_non0coverage.txt > r_non0pos.txt
 ```
 # Define intervals with coverage
-## Invoke python script which isolates intervals with read coverage and excludes regions without coverage
+## Invoke [python](https://github.com/jarrettlebov/OperonPredict/blob/main/CoverageIntervals/PythonScripts/non0CovInter.py) script which isolates intervals with read coverage and excludes regions without coverage
 ```{bash, eval = F}
 python $Scripts/non0CovInter.py f_non0pos.txt > f_covinter.txt
 python $Scripts/non0CovInter.py r_non0pos.txt > r_covinter.txt
