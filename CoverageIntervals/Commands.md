@@ -1,5 +1,5 @@
 # Commands
-This scipt details the commands used to find operon intervals <em>de novo<em>
+This scipt details the commands used to find genomic intervals with consistent read coverage
 
 <!-- MarkdownTOC autolink="true" -->
 
