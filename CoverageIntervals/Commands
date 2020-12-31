@@ -1,6 +1,3 @@
-# Commands
-This scipt details the commands used to find operon intervals
-
 <!-- MarkdownTOC autolink="true" -->
 
 - [Directories](#directories)
@@ -92,4 +89,3 @@ cut -f2 r_non0coverage.txt > r_non0pos.txt
 python $Scripts/non0CovInter.py f_non0pos.txt > f_covinter.txt
 python $Scripts/non0CovInter.py r_non0pos.txt > r_covinter.txt
 ```
-
