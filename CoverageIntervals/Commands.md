@@ -8,6 +8,7 @@ This scipt details the commands used to find genomic intervals with consistent r
 - [Map reads to reference E. coli K12 genome](#map-reads-to-reference-e-coli-k12-genome)
 - [Prepare reads for visualization on IGV](#prepare-reads-for-visualization-on-igv)
 	- [Sort and index bam file](#sort-and-index-bam-file)
+	- [Extract read coordinates that map to non-t/rRNA regions](#extract-read-coordinates-that-map-to-non-trrna-regions)
 	- [Isolate forward and reverse strand reads](#isolate-forward-and-reverse-strand-reads)
 	- [Index reads](#index-reads)
 - [Determine coverage at each position in the genome](#determine-coverage-at-each-position-in-the-genome)
@@ -57,39 +58,49 @@ cd "$Align_dir"
 samtools sort mapped_K12_directRNA.bam -o sorted_mapped_K12_directRNA.bam
 samtools index sorted_mapped_K12_directRNA.bam
 ```
+## Extract read coordinates that map to non-t/rRNA regions
+```{bash, eval = F}
+cd "$Ref_dir"
+grep -v "biotype=rRNA\|biotype=tRNA" GFF_files/GCF_000005845.2_ASM584v2_genomic.gff | grep "CDS" | awk -F "\t" '{print $1,$4,$5,$7}' OFS="\t" | sort -k2 -n | uniq > all_gene_cds.bed
+cd $Align_dir
+samtools view -bL "$Ref_dir"/all_gene_cds.bed sorted_mapped_K12_directRNA.bam > gene_reads.bam
+bedtools bamtobed -i gene_reads.bam > gene_reads.bed
+```
 ## Isolate forward and reverse strand reads
 ```{bash, eval = F}
 cd "$Align_dir"
-samtools view -F 4 -F 16 -o f_sorted_mapped_K12_directRNA.bam sorted_mapped_K12_directRNA.bam
-samtools view -f 16 -o r_sorted_mapped_K12_directRNA.bam sorted_mapped_K12_directRNA.bam
+samtools view -F 4 -F 16 -o f_gene_reads.bam gene_reads.bam
+samtools view -f 16 -o r_gene_reads.bam gene_reads.bam
 ```
 ## Index reads
 ```{bash, eval = F}
 cd "$Align_dir"
-samtools index f_sorted_mapped_K12_directRNA.bam
-samtools index r_sorted_mapped_K12_directRNA.bam
+samtools index f_gene_reads.bam
+samtools index r_gene_reads.bam
 ```
 # Determine coverage at each position in the genome
 ```{bash, eval = F}
 cd "$Align_dir"
-samtools depth -aa f_sorted_mapped_K12_directRNA.bam > f_coverage.txt
-samtools depth -aa r_sorted_mapped_K12_directRNA.bam > r_coverage.txt
+samtools depth -aa f_gene_reads.bam > f_genes_coverage.txt
+samtools depth -aa r_gene_reads.bam > r_genes_coverage.txt
 ```
 ## Determine coverage at all non-zero positions (this might require a grep -v "0")
 ```{bash, eval = F}
-samtools depth f_sorted_mapped_K12_directRNA.bam > f_non0coverage.txt
-samtools depth r_sorted_mapped_K12_directRNA.bam > r_non0coverage.txt
+cd "$Align_dir"
+samtools depth f_gene_reads.bam > f_genes_non0coverage.txt
+samtools depth r_gene_reads.bam > r_genes_non0coverage.txt
 ```
 ## Isolate only the positions column
 ```{bash, eval = F}
 cd $Align_dir
-cut -f2 f_non0coverage.txt > f_non0pos.txt
-cut -f2 r_non0coverage.txt > r_non0pos.txt
+cut -f2 f_genes_non0coverage.txt > f_genes_non0pos.txt
+cut -f2 r_genes_non0coverage.txt > r_genes_non0pos.txt
 ```
 # Define intervals with coverage
 ## Invoke [python](https://github.com/jarrettlebov/OperonPredict/blob/main/CoverageIntervals/PythonScripts/non0CovInter.py) script which isolates intervals with read coverage and excludes regions without coverage
 ```{bash, eval = F}
-python $Scripts/non0CovInter.py f_non0pos.txt > f_covinter.txt
-python $Scripts/non0CovInter.py r_non0pos.txt > r_covinter.txt
+cd $Align_dir
+python $Scripts/non0CovInter.py f_genes_non0pos.txt > f_genes_covinter.txt
+python $Scripts/non0CovInter.py r_genes_non0pos.txt > r_genes_covinter.txt
 ```
 
